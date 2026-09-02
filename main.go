@@ -1,7 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"log"
+	"net/http"
+)
 
 func main() {
-	fmt.Println("Hello World!")
+	const port = "8080"
+	reqMultiplexer := http.NewServeMux()
+	server := http.Server{Addr: ":" + port, Handler: reqMultiplexer}
+	log.Printf("Serving on port: %s", port)
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		log.Fatalf("HTTP server ListenAndServe: %v", err)
+	}
+
 }

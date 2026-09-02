@@ -7,9 +7,16 @@ import (
 
 func main() {
 	const port = "8080"
-	reqMultiplexer := http.NewServeMux()
-	server := http.Server{Addr: ":" + port, Handler: reqMultiplexer}
+	mux := http.NewServeMux()
+	server := http.Server{Addr: ":" + port, Handler: mux}
 	log.Printf("Serving on port: %s", port)
+
+	fileServerHandler := http.FileServer(http.Dir("."))
+	fileServerHandler = http.StripPrefix("/app", fileServerHandler)
+
+	mux.Handle("/app/", fileServerHandler)
+	mux.HandleFunc("/healthz", EndpointHandler)
+
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}

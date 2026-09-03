@@ -18,9 +18,9 @@ func main() {
 	var apiCfg apiConfig
 
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(fileServerHandler))
-	mux.HandleFunc("/healthz", endpointHandler)
-	mux.HandleFunc("/metrics", apiCfg.reqCountHandler)
-	mux.HandleFunc("/reset", apiCfg.resetCountHandler)
+	mux.HandleFunc("GET /api/healthz", endpointHandler)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.reqCountHandler)
+	mux.HandleFunc("POST /admin/reset", apiCfg.resetCountHandler)
 
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("HTTP server ListenAndServe: %v", err)

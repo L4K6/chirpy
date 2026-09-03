@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"sync/atomic"
 )
 
 func main() {
@@ -14,11 +15,26 @@ func main() {
 	fileServerHandler := http.FileServer(http.Dir("."))
 	fileServerHandler = http.StripPrefix("/app", fileServerHandler)
 
-	mux.Handle("/app/", fileServerHandler)
-	mux.HandleFunc("/healthz", EndpointHandler)
+	var apiCfg apiConfig
+
+	mux.Handle("/app/", apiCfg.middlewareMetricsInc(fileServerHandler))
+	mux.HandleFunc("/healthz", endpointHandler)
+	mux.HandleFunc("/metrics", apiCfg.reqCountHandler)
+	mux.HandleFunc("/reset", apiCfg.resetCountHandler)
 
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
 
+}
+
+type apiConfig struct {
+	fileserverHits atomic.Int32
+}
+
+func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cfg.fileserverHits.Add(1)
+		next.ServeHTTP(w, r)
+	})
 }
